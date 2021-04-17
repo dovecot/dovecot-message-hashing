@@ -11,6 +11,8 @@
 #include "mail-storage-private.h"
 #include "message-hashing-plugin.h"
 #include "notify-plugin.h"
+#include "ostream.h"
+#include "ostream-null.h"
 #include "safe-mkstemp.h"
 #include "str.h"
 
@@ -93,7 +95,7 @@ static int message_hashing_attachment_open_temp_fd(void *context)
 
 static int
 message_hashing_attachment_open_ostream(struct istream_attachment_info *info,
-					struct ostream **output_r ATTR_UNUSED,
+					struct ostream **output_r,
 					const char **error_r ATTR_UNUSED,
 					void *context)
 {
@@ -106,15 +108,19 @@ message_hashing_attachment_open_ostream(struct istream_attachment_info *info,
 		event(), "message part (%s, %zu)", info->hash,
 		info->encoded_size);
 
+	*output_r = o_stream_create_null();
+
 	return 0;
 }
 
 static int
-message_hashing_attachment_close_ostream(struct ostream *output ATTR_UNUSED,
+message_hashing_attachment_close_ostream(struct ostream *output,
 					 bool success ATTR_UNUSED,
 					 const char **error ATTR_UNUSED,
 					 void *context ATTR_UNUSED)
 {
+	o_stream_unref(&output);
+
 	return 0;
 }
 
