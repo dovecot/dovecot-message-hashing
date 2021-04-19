@@ -27,7 +27,6 @@ struct message_hashing_mail_txn_context {
 	const struct hash_method *hash;
 	unsigned char *hash_ctx;
 	struct istream *hinput;
-	uoff_t msg_size;
 	struct mail_user *muser;
 
 	pool_t pool;
@@ -39,17 +38,17 @@ static MODULE_CONTEXT_DEFINE_INIT(message_hashing_user_module,
 
 static void
 message_hashing_init_full_message(struct message_hashing_mail_txn_context *ctx,
-				  struct istream *input, struct mail *mail)
+				  struct istream *input)
 {
 	ctx->hash = hash_method_lookup("md5");
 	ctx->hash_ctx = p_malloc(ctx->pool, ctx->hash->context_size);
 	ctx->hash->init(ctx->hash_ctx);
 	ctx->hinput = i_stream_create_hash(input, ctx->hash, ctx->hash_ctx);
-	(void)mail_get_physical_size(mail, &ctx->msg_size);
 }
 
 static void
-message_hashing_deinit_full_message(struct message_hashing_mail_txn_context *ctx)
+message_hashing_deinit_full_message(struct message_hashing_mail_txn_context *ctx,
+				    struct istream *input)
 {
 	unsigned char *digest;
 	const char *hash;
@@ -62,8 +61,8 @@ message_hashing_deinit_full_message(struct message_hashing_mail_txn_context *ctx
 	e_debug(event_create_passthrough(ctx->event)->
 		set_name("message_hashing_msg_full")->
 		add_str("hash", hash)->
-		add_int("size", ctx->msg_size)->
-		event(), "full message (%s, %zu)", hash, ctx->msg_size);
+		add_int("size", input->v_offset)->
+		event(), "full message (%s, %zu)", hash, input->v_offset);
 
 	i_stream_destroy(&ctx->hinput);
 }
@@ -155,9 +154,9 @@ static void message_hashing_mail_save(void *txn, struct mail *mail)
 	if (mail_get_stream_because(mail, NULL, NULL, "message hashing", &input) < 0)
 		return;
 
-	message_hashing_init_full_message(ctx, input, mail);
+	message_hashing_init_full_message(ctx, input);
 	message_hashing_parse_message(ctx);
-	message_hashing_deinit_full_message(ctx);
+	message_hashing_deinit_full_message(ctx, input);
 }
 
 static void *
