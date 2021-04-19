@@ -40,8 +40,6 @@ static void
 message_hashing_init_full_message(struct message_hashing_mail_txn_context *ctx,
 				  struct istream *input)
 {
-	ctx->hash = hash_method_lookup("md5");
-	ctx->hash_ctx = p_malloc(ctx->pool, ctx->hash->context_size);
 	ctx->hash->init(ctx->hash_ctx);
 	ctx->hinput = i_stream_create_hash(input, ctx->hash, ctx->hash_ctx);
 }
@@ -165,8 +163,8 @@ message_hashing_mail_transaction_begin(struct mailbox_transaction_context *t)
 	struct mailbox *box;
 	struct message_hashing_mail_txn_context *ctx;
 	struct mail_user *muser;
-	struct mail_storage *storage;
 	pool_t pool;
+	struct mail_storage *storage;
 
 	pool = pool_alloconly_create("message hashing transaction", 2048);
 
@@ -178,6 +176,9 @@ message_hashing_mail_transaction_begin(struct mailbox_transaction_context *t)
 	ctx->event = event_create(muser->event);
 	ctx->muser = muser;
 	ctx->pool = pool;
+
+	ctx->hash = hash_method_lookup("md5");
+	ctx->hash_ctx = p_malloc(pool, ctx->hash->context_size);
 
 	event_set_append_log_prefix(ctx->event, "message-hashing: ");
 
