@@ -37,11 +37,6 @@ static MODULE_CONTEXT_DEFINE_INIT(message_hashing_user_module,
 				  &mail_user_module_register);
 
 
-struct event_category event_category_message_hashing = {
-	.name = "message_hashing"
-};
-
-
 static void
 message_hashing_init_full_message(struct message_hashing_mail_txn_context *ctx,
 				  struct istream *input, struct mail *mail)
@@ -185,7 +180,6 @@ message_hashing_mail_transaction_begin(struct mailbox_transaction_context *t)
 	ctx->muser = muser;
 	ctx->pool = pool;
 
-	event_add_category(ctx->event, &event_category_message_hashing);
 	event_set_append_log_prefix(ctx->event, "message-hashing: ");
 
 	return ctx;
