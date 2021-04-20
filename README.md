@@ -69,12 +69,26 @@ sudo make install
 Configuration
 -------------
 
-None.
+Message Hashing plugin provies a single plugin option for configuration:
+`message_hashing`.
+
+Options for the `message_hashing` plugin setting:
+
+ - `hash_method` - The hashing method to use. Must be a recognized Dovecot
+                   hash method (see
+                   https://doc.dovecot.org/settings/core/#setting-auth-policy-hash-mech)
+                   or else the plugin will log a warning and be disabled.
+                   (string; DEFAULT: "md5")
+
 
 Example configuration:
 
 ```
 mail_plugins = $mail_plugins message_hashing
+
+plugin {
+  message_hashing = hash_method=md5
+}
 ```
 
 Logging/Events

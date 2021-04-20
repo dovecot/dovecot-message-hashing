@@ -16,22 +16,31 @@
 #include "safe-mkstemp.h"
 #include "str.h"
 
+#define MESSAGE_HASHING_DEFAULT_HASH_METHOD "md5"
+#define MESSAGE_HASHING_PLUGIN_NAME "message_hashing"
 
-// TODO: Is this needed?
+struct message_hashing_settings {
+	const char *hash_method;
+};
+
 struct message_hashing_user {
 	union mail_user_module_context module_ctx;
+	struct message_hashing_settings set;
 };
 
 struct message_hashing_mail_txn_context {
 	struct event *event;
 	const struct hash_method *hash;
 	unsigned char *hash_ctx;
+	const char *hash_format_variable;
 	struct istream *hinput;
 	struct mail_user *muser;
 
 	pool_t pool;
 };
 
+#define MESSAGE_HASHING_USER_CONTEXT(obj) \
+        MODULE_CONTEXT_REQUIRE(obj, message_hashing_user_module)
 static MODULE_CONTEXT_DEFINE_INIT(message_hashing_user_module,
 				  &mail_user_module_register);
 
@@ -127,7 +136,8 @@ message_hashing_parse_message(struct message_hashing_mail_txn_context *ctx)
 
 	i_zero(&set);
 
-  	(void)hash_format_init("%{md5}", &set.hash_format, &error);
+	(void)hash_format_init(ctx->hash_format_variable, &set.hash_format,
+			       &error);
 	set.min_size = 1;
 	set.drain_parent_input = TRUE;
 	set.want_attachment = NULL;
@@ -162,23 +172,27 @@ message_hashing_mail_transaction_begin(struct mailbox_transaction_context *t)
 {
 	struct mailbox *box;
 	struct message_hashing_mail_txn_context *ctx;
-	struct mail_user *muser;
+	struct message_hashing_user *muser;
 	pool_t pool;
 	struct mail_storage *storage;
+	struct mail_user *user;
 
 	pool = pool_alloconly_create("message hashing transaction", 2048);
 
 	box = mailbox_transaction_get_mailbox(t);
 	storage = mailbox_get_storage(box);
-	muser = mail_storage_get_user(storage);
+	user = mail_storage_get_user(storage);
+	muser = MESSAGE_HASHING_USER_CONTEXT(user);
 
 	ctx = p_new(pool, struct message_hashing_mail_txn_context, 1);
-	ctx->event = event_create(muser->event);
-	ctx->muser = muser;
+	ctx->event = event_create(user->event);
+	ctx->muser = user;
 	ctx->pool = pool;
 
-	ctx->hash = hash_method_lookup("md5");
+	ctx->hash = hash_method_lookup(muser->set.hash_method);
 	ctx->hash_ctx = p_malloc(pool, ctx->hash->context_size);
+	ctx->hash_format_variable = p_strdup_printf(pool, "%%{%s}",
+						    muser->set.hash_method);
 
 	event_set_append_log_prefix(ctx->event, "message-hashing: ");
 
@@ -196,11 +210,48 @@ message_hashing_mail_transaction_commit(void *txn,
 	pool_unref(&ctx->pool);
 }
 
+static int
+message_hashing_plugin_init_settings(struct mail_user *user,
+				     struct message_hashing_settings *set,
+				     const char *str)
+{
+	const char *const *tmp;
+
+	set->hash_method = MESSAGE_HASHING_DEFAULT_HASH_METHOD;
+
+	for (tmp = t_strsplit_spaces(str, " "); *tmp != NULL; tmp++) {
+		if (str_begins(*tmp, "hash_method=")) {
+			set->hash_method = p_strdup(user->pool, *tmp + 12);
+			if (hash_method_lookup(set->hash_method) == NULL) {
+				i_error(MESSAGE_HASHING_PLUGIN_NAME
+					": Invalid hash method: %s",
+					set->hash_method);
+				return -1;
+			}
+		} else {
+			i_error(MESSAGE_HASHING_PLUGIN_NAME
+				": Invalid setting: %s", *tmp);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static void message_hashing_mail_user_created(struct mail_user *user)
 {
+	const char *env;
 	struct message_hashing_user *muser;
 
 	muser = p_new(user->pool, struct message_hashing_user, 1);
+	env = mail_user_plugin_getenv(user, MESSAGE_HASHING_PLUGIN_NAME);
+	if (env == NULL)
+		env = "";
+
+	if (message_hashing_plugin_init_settings(user, &muser->set, env) < 0)
+		/* Invalid settings; disable plugin. */
+		return;
+
 	MODULE_CONTEXT_SET(user, message_hashing_user_module, muser);
 }
 
