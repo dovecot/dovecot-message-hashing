@@ -79,7 +79,9 @@ Options for the `message_hashing` plugin setting:
                    https://doc.dovecot.org/settings/core/#setting-auth-policy-hash-mech)
                    or else the plugin will log a warning and be disabled.
                    (string; DEFAULT: "md5")
-
+ - `min_atc_size` - The minimum size of an attachment (in bytes) to be
+                    processed; attachments smaller than this will be skipped.
+                    (integer; DEFAULT: 1)
 
 Example configuration:
 

@@ -17,10 +17,12 @@
 #include "str.h"
 
 #define MESSAGE_HASHING_DEFAULT_HASH_METHOD "md5"
+#define MESSAGE_HASHING_DEFAULT_MIN_ATC_SIZE 1
 #define MESSAGE_HASHING_PLUGIN_NAME "message_hashing"
 
 struct message_hashing_settings {
 	const char *hash_method;
+	unsigned int min_atc_size;
 };
 
 struct message_hashing_user {
@@ -133,12 +135,15 @@ message_hashing_parse_message(struct message_hashing_mail_txn_context *ctx)
 	struct istream *input;
 	struct istream_attachment_settings set;
 	size_t size;
+	struct message_hashing_user *user;
 
 	i_zero(&set);
 
 	(void)hash_format_init(ctx->hash_format_variable, &set.hash_format,
 			       &error);
-	set.min_size = 1;
+
+	user = MESSAGE_HASHING_USER_CONTEXT(ctx->muser);
+	set.min_size = user->set.min_atc_size;
 	set.drain_parent_input = TRUE;
 	set.want_attachment = NULL;
 	set.open_temp_fd = message_hashing_attachment_open_temp_fd;
@@ -216,8 +221,10 @@ message_hashing_plugin_init_settings(struct mail_user *user,
 				     const char *str)
 {
 	const char *const *tmp;
+	unsigned int val;
 
 	set->hash_method = MESSAGE_HASHING_DEFAULT_HASH_METHOD;
+	set->min_atc_size = MESSAGE_HASHING_DEFAULT_MIN_ATC_SIZE;
 
 	for (tmp = t_strsplit_spaces(str, " "); *tmp != NULL; tmp++) {
 		if (str_begins(*tmp, "hash_method=")) {
@@ -228,6 +235,15 @@ message_hashing_plugin_init_settings(struct mail_user *user,
 					set->hash_method);
 				return -1;
 			}
+		} else if (str_begins(*tmp, "min_atc_size=")) {
+			if (str_to_uint(*tmp + 13, &val) < 0) {
+				i_error(MESSAGE_HASHING_PLUGIN_NAME
+					": Invalid hash method: %s",
+					set->hash_method);
+				return -1;
+			}
+			set->min_atc_size = I_MAX(MESSAGE_HASHING_DEFAULT_MIN_ATC_SIZE,
+						  val);
 		} else {
 			i_error(MESSAGE_HASHING_PLUGIN_NAME
 				": Invalid setting: %s", *tmp);
