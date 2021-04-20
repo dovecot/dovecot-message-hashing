@@ -103,13 +103,16 @@ message_hashing_msg_full
 
 Emitted for every message saved.
 
-+---------+-------------------------------------------+
-| Field   | Description                               |
-+=========+===========================================+
-| hash    | The hash of the entire message            |
-+---------+-------------------------------------------+
-| size    | The size (in bytes) of the entire message |
-+---------+-------------------------------------------+
++-------------+-----------------------------------------------------+
+| Field       | Description                                         |
++=============+=====================================================+
+| attachments | The number of attachments processed in this message |
+|             | (attachments with size > min_atc_size)              |
++-------------+-----------------------------------------------------+
+| hash        | The hash of the entire message                      |
++-------------+-----------------------------------------------------+
+| size        | The size (in bytes) of the entire message           |
++-------------+-----------------------------------------------------+
 
 message_hashing_msg_part
 ~~~~~~~~~~~~~~~~~~~~~~~~

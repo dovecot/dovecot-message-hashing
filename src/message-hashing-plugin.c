@@ -31,6 +31,7 @@ struct message_hashing_user {
 };
 
 struct message_hashing_mail_txn_context {
+	unsigned int atc_count;
 	struct event *event;
 	const struct hash_method *hash;
 	unsigned char *hash_ctx;
@@ -51,6 +52,7 @@ static void
 message_hashing_init_full_message(struct message_hashing_mail_txn_context *ctx,
 				  struct istream *input)
 {
+	ctx->atc_count = 0;
 	ctx->hash->init(ctx->hash_ctx);
 	ctx->hinput = i_stream_create_hash(input, ctx->hash, ctx->hash_ctx);
 }
@@ -69,6 +71,7 @@ message_hashing_deinit_full_message(struct message_hashing_mail_txn_context *ctx
 
 	e_debug(event_create_passthrough(ctx->event)->
 		set_name("message_hashing_msg_full")->
+		add_int("attachments", ctx->atc_count)->
 		add_str("hash", hash)->
 		add_int("size", input->v_offset)->
 		event(), "full message (%s, %zu)", hash, input->v_offset);
