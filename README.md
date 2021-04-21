@@ -98,29 +98,21 @@ Logging/Events
 
 The following named events are emitted:
 
-## message_hashing_msg_full
+### message_hashing_msg_full
 
 Emitted for every message saved.
 
-+-------------+-----------------------------------------------------+
-| Field       | Description                                         |
-+=============+=====================================================+
-| attachments | The number of attachments processed in this message |
-|             | (attachments with size > min_atc_size)              |
-+-------------+-----------------------------------------------------+
-| hash        | The hash of the entire message                      |
-+-------------+-----------------------------------------------------+
-| size        | The size (in bytes) of the entire message           |
-+-------------+-----------------------------------------------------+
+Field       | Description     
+----------- | -----------
+attachments | The number of attachments processed in this message (attachments with size > min_atc_size)
+hash        | The hash of the entire message
+size        | The size (in bytes) of the entire message
 
-## message_hashing_msg_part
+### message_hashing_msg_part
 
 Emitted for every attachment found.
 
-+---------+---------------------------------------+
-| Field   | Description                           |
-+=========+=======================================+
-| hash    | The hash of the attachment            |
-+---------+---------------------------------------+
-| size    | The size (in bytes) of the attachment |
-+---------+---------------------------------------+
+Field  | Description     
+-------| -----------
+hash   | The hash of the attachment
+size   | The size (in bytes) of the attachment
