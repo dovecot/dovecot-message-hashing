@@ -218,6 +218,12 @@ message_hashing_mail_transaction_commit(void *txn,
 	pool_unref(&ctx->pool);
 }
 
+static void
+message_hashing_mail_transaction_rollback(void *txn)
+{
+	message_hashing_mail_transaction_commit(txn, NULL);
+}
+
 static int
 message_hashing_plugin_init_settings(struct mail_user *user,
 				     struct message_hashing_settings *set,
@@ -279,7 +285,8 @@ static void message_hashing_mail_user_created(struct mail_user *user)
 static const struct notify_vfuncs message_hashing_vfuncs = {
 	.mail_save = message_hashing_mail_save,
 	.mail_transaction_begin = message_hashing_mail_transaction_begin,
-	.mail_transaction_commit = message_hashing_mail_transaction_commit
+	.mail_transaction_commit = message_hashing_mail_transaction_commit,
+	.mail_transaction_rollback = message_hashing_mail_transaction_rollback
 };
 
 static struct notify_context *message_hashing_ctx;
