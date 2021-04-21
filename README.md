@@ -98,8 +98,7 @@ Logging/Events
 
 The following named events are emitted:
 
-message_hashing_msg_full
-~~~~~~~~~~~~~~~~~~~~~~~~
+## message_hashing_msg_full
 
 Emitted for every message saved.
 
@@ -114,8 +113,7 @@ Emitted for every message saved.
 | size        | The size (in bytes) of the entire message           |
 +-------------+-----------------------------------------------------+
 
-message_hashing_msg_part
-~~~~~~~~~~~~~~~~~~~~~~~~
+## message_hashing_msg_part
 
 Emitted for every attachment found.
 
