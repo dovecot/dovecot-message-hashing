@@ -116,3 +116,20 @@ Field  | Description
 -------| -----------
 hash   | The hash of the attachment
 size   | The size (in bytes) of the attachment
+
+Debugging
+---------
+
+You can view message hashing information in the log by using `log_debug`:
+
+```
+log_debug = event=message_hashing_msg_full OR event=message_hashing_msg_part
+```
+
+Example output:
+
+```
+Apr 21 19:11:39 imap(3752 foo)<KWoZVYDAEI9/AAAB>: Debug: message-hashing: message part (06a9effc7cb6182578e876d0cce2b617, 7)
+Apr 21 19:11:39 imap(3752 foo)<KWoZVYDAEI9/AAAB>: Debug: message-hashing: message part (c9269421e2389c0ca53bcf1854e49182, 8)
+Apr 21 19:11:39 imap(3752 foo)<KWoZVYDAEI9/AAAB>: Debug: message-hashing: full message (8e8c6d47004d4e0a99f14d6cd788ee4f, 81)
+```
