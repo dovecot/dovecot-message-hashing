@@ -83,13 +83,15 @@ Options for the `message_hashing` plugin setting:
                     processed; attachments smaller than this will be skipped.
                     (integer; DEFAULT: 1)
 
+This plugin requires the `notify` plugin to be loaded.
+
 Example configuration:
 
 ```
-mail_plugins = $mail_plugins message_hashing
+mail_plugins = $mail_plugins notify message_hashing
 
 plugin {
-  message_hashing = hash_method=md5
+  message_hashing = hash_method=md5 min_atc_size=1
 }
 ```
 
