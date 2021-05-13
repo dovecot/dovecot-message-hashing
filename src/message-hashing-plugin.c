@@ -19,6 +19,7 @@
 #define MESSAGE_HASHING_DEFAULT_HASH_METHOD "md5"
 #define MESSAGE_HASHING_DEFAULT_MIN_ATC_SIZE 1
 #define MESSAGE_HASHING_PLUGIN_NAME "message_hashing"
+#define MESSAGE_HASHING_PLUGIN_LOG_LABEL MESSAGE_HASHING_PLUGIN_NAME ": "
 
 struct message_hashing_settings {
 	const char *hash_method;
@@ -273,9 +274,12 @@ static void message_hashing_mail_user_created(struct mail_user *user)
 	if (env == NULL)
 		env = "";
 
-	if (message_hashing_plugin_init_settings(user, &muser->set, env) < 0)
+	if (message_hashing_plugin_init_settings(user, &muser->set, env) < 0) {
 		/* Invalid settings; disable plugin. */
+		i_error(MESSAGE_HASHING_PLUGIN_LOG_LABEL
+			"Invalid plugin settings");
 		return;
+	}
 
 	MODULE_CONTEXT_SET(user, message_hashing_user_module, muser);
 }
