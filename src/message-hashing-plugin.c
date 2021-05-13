@@ -203,7 +203,8 @@ message_hashing_mail_transaction_begin(struct mailbox_transaction_context *t)
 	ctx->hash_format_variable = p_strdup_printf(pool, "%%{%s}",
 						    muser->set.hash_method);
 
-	event_set_append_log_prefix(ctx->event, "message-hashing: ");
+	event_set_append_log_prefix(ctx->event,
+				    MESSAGE_HASHING_PLUGIN_LOG_LABEL);
 
 	return ctx;
 }
@@ -240,23 +241,23 @@ message_hashing_plugin_init_settings(struct mail_user *user,
 		if (str_begins(*tmp, "hash_method=")) {
 			set->hash_method = p_strdup(user->pool, *tmp + 12);
 			if (hash_method_lookup(set->hash_method) == NULL) {
-				i_error(MESSAGE_HASHING_PLUGIN_NAME
-					": Invalid hash method: %s",
+				i_error(MESSAGE_HASHING_PLUGIN_LOG_LABEL
+					"Invalid hash_method setting: %s",
 					set->hash_method);
 				return -1;
 			}
 		} else if (str_begins(*tmp, "min_atc_size=")) {
 			if (str_to_uint(*tmp + 13, &val) < 0) {
-				i_error(MESSAGE_HASHING_PLUGIN_NAME
-					": Invalid hash method: %s",
+				i_error(MESSAGE_HASHING_PLUGIN_LOG_LABEL
+					"Invalid min_atc_size setting: %s",
 					set->hash_method);
 				return -1;
 			}
 			set->min_atc_size = I_MAX(MESSAGE_HASHING_DEFAULT_MIN_ATC_SIZE,
 						  val);
 		} else {
-			i_error(MESSAGE_HASHING_PLUGIN_NAME
-				": Invalid setting: %s", *tmp);
+			i_error(MESSAGE_HASHING_PLUGIN_LOG_LABEL
+				"Invalid setting: %s", *tmp);
 			return -1;
 		}
 	}
