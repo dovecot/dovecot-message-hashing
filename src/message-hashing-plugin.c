@@ -117,6 +117,8 @@ message_hashing_attachment_open_ostream(struct istream_attachment_info *info,
 
 	*output_r = o_stream_create_null();
 
+	++ctx->atc_count;
+
 	return 0;
 }
 
