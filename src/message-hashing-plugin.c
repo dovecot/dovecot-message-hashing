@@ -28,6 +28,7 @@ struct message_hashing_settings {
 
 struct message_hashing_user {
 	union mail_user_module_context module_ctx;
+	struct notify_context *message_hashing_ctx;
 	struct message_hashing_settings set;
 };
 
@@ -267,28 +268,6 @@ message_hashing_plugin_init_settings(struct mail_user *user,
 	return 0;
 }
 
-static void message_hashing_mail_user_created(struct mail_user *user)
-{
-	const char *env;
-	struct message_hashing_user *muser;
-
-	muser = p_new(user->pool, struct message_hashing_user, 1);
-	env = mail_user_plugin_getenv(user, MESSAGE_HASHING_PLUGIN_NAME);
-	if (env == NULL)
-		env = "";
-
-	if (message_hashing_plugin_init_settings(user, &muser->set, env) < 0) {
-		/* Invalid settings; disable plugin. */
-		i_error(MESSAGE_HASHING_PLUGIN_LOG_LABEL
-			"Invalid plugin settings");
-		return;
-	}
-
-	MODULE_CONTEXT_SET(user, message_hashing_user_module, muser);
-}
-
-/* Plugin Initialization. */
-
 static const struct notify_vfuncs message_hashing_vfuncs = {
 	.mail_save = message_hashing_mail_save,
 	.mail_transaction_begin = message_hashing_mail_transaction_begin,
@@ -296,7 +275,41 @@ static const struct notify_vfuncs message_hashing_vfuncs = {
 	.mail_transaction_rollback = message_hashing_mail_transaction_rollback
 };
 
-static struct notify_context *message_hashing_ctx;
+static void message_hashing_mail_user_deinit(struct mail_user *user)
+{
+	struct message_hashing_user *muser = MESSAGE_HASHING_USER_CONTEXT(user);
+
+	notify_unregister(muser->message_hashing_ctx);
+
+	muser->module_ctx.super.deinit(user);
+}
+
+static void message_hashing_mail_user_created(struct mail_user *user)
+{
+	const char *env;
+	struct message_hashing_user *muser;
+	struct mail_user_vfuncs *v = user->vlast;
+
+	muser = p_new(user->pool, struct message_hashing_user, 1);
+	env = mail_user_plugin_getenv(user, MESSAGE_HASHING_PLUGIN_NAME);
+	if (env == NULL)
+		env = "";
+
+	if (message_hashing_plugin_init_settings(user, &muser->set, env) < 0) {
+		/* Invalid settings; disable plugin. Error messages have
+		 * already been sent to logs. */
+		return;
+	}
+
+	muser->module_ctx.super = *v;
+	user->vlast = &muser->module_ctx.super;
+	v->deinit = message_hashing_mail_user_deinit;
+	MODULE_CONTEXT_SET(user, message_hashing_user_module, muser);
+
+	muser->message_hashing_ctx = notify_register(&message_hashing_vfuncs);
+}
+
+/* Plugin Initialization. */
 
 static struct mail_storage_hooks message_hashing_mail_storage_hooks = {
 	.mail_user_created = message_hashing_mail_user_created
@@ -304,14 +317,12 @@ static struct mail_storage_hooks message_hashing_mail_storage_hooks = {
 
 void message_hashing_plugin_init(struct module *module)
 {
-	message_hashing_ctx = notify_register(&message_hashing_vfuncs);
 	mail_storage_hooks_add(module, &message_hashing_mail_storage_hooks);
 }
 
 void message_hashing_plugin_deinit(void)
 {
 	mail_storage_hooks_remove(&message_hashing_mail_storage_hooks);
-	notify_unregister(message_hashing_ctx);
 }
 
 const char *message_hashing_plugin_dependencies[] = { "notify", NULL };
