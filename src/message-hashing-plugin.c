@@ -253,7 +253,7 @@ message_hashing_plugin_init_settings(struct mail_user *user,
 			if (str_to_uint(*tmp + 13, &val) < 0) {
 				i_error(MESSAGE_HASHING_PLUGIN_LOG_LABEL
 					"Invalid min_atc_size setting: %s",
-					set->hash_method);
+					*tmp + 13);
 				return -1;
 			}
 			set->min_atc_size = I_MAX(MESSAGE_HASHING_DEFAULT_MIN_ATC_SIZE,
