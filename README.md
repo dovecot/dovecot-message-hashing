@@ -106,6 +106,7 @@ Emitted for every message saved.
 
 Field       | Description     
 ----------- | -----------
+append      | If 1, the message was saved via IMAP APPEND
 attachments | The number of attachments processed in this message (attachments with size > min_atc_size)
 hash        | The hash of the entire message
 size        | The size (in bytes) of the entire message
@@ -116,6 +117,7 @@ Emitted for every attachment found.
 
 Field  | Description     
 -------| -----------
+append | If 1, the message was saved via IMAP APPEND
 hash   | The hash of the attachment
 size   | The size (in bytes) of the attachment
 

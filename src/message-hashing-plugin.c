@@ -40,6 +40,7 @@ struct message_hashing_mail_txn_context {
 	const char *hash_format_variable;
 	struct istream *hinput;
 	struct mail_user *muser;
+	bool is_append;
 
 	pool_t pool;
 };
@@ -52,9 +53,10 @@ static MODULE_CONTEXT_DEFINE_INIT(message_hashing_user_module,
 
 static void
 message_hashing_init_full_message(struct message_hashing_mail_txn_context *ctx,
-				  struct istream *input)
+				  struct istream *input, struct mail *mail)
 {
 	ctx->atc_count = 0;
+	ctx->is_append = ((mail->box->flags & MAILBOX_FLAG_POST_SESSION) == 0);
 	ctx->hash->init(ctx->hash_ctx);
 	ctx->hinput = i_stream_create_hash(input, ctx->hash, ctx->hash_ctx);
 }
@@ -73,10 +75,12 @@ message_hashing_deinit_full_message(struct message_hashing_mail_txn_context *ctx
 
 	e_debug(event_create_passthrough(ctx->event)->
 		set_name("message_hashing_msg_full")->
+		add_int("append", ctx->is_append ? 1 : 0)->
 		add_int("attachments", ctx->atc_count)->
 		add_str("hash", hash)->
 		add_int("size", input->v_offset)->
-		event(), "full message (%s, %zu)", hash, input->v_offset);
+		event(), "full message (%s, %zu%s)", hash, input->v_offset,
+		ctx->is_append ? ", APPEND" : "");
 
 	i_stream_destroy(&ctx->hinput);
 }
@@ -111,10 +115,11 @@ message_hashing_attachment_open_ostream(struct istream_attachment_info *info,
 
 	e_debug(event_create_passthrough(ctx->event)->
 		set_name("message_hashing_msg_part")->
+		add_int("append", ctx->is_append ? 1 : 0)->
 		add_str("hash", info->hash)->
 		add_int("size", info->encoded_size)->
-		event(), "message part (%s, %zu)", info->hash,
-		info->encoded_size);
+		event(), "message part (%s, %zu%s)", info->hash,
+		info->encoded_size, ctx->is_append ? ", APPEND" : "");
 
 	*output_r = o_stream_create_null();
 
@@ -174,7 +179,7 @@ static void message_hashing_mail_save(void *txn, struct mail *mail)
 	if (mail_get_stream_because(mail, NULL, NULL, "message hashing", &input) < 0)
 		return;
 
-	message_hashing_init_full_message(ctx, input);
+	message_hashing_init_full_message(ctx, input, mail);
 	message_hashing_parse_message(ctx);
 	message_hashing_deinit_full_message(ctx, input);
 }
