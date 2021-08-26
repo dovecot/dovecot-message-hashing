@@ -1,0 +1,12 @@
+on:
+  push:
+    paths:
+      - 'src/**'
+  pull_request:
+jobs:
+  build:
+    name: Testing for dovecot-message-hashing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/dovecot-message-hashing-test

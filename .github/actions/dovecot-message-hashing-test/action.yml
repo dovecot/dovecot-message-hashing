@@ -1,0 +1,11 @@
+name: "dovecot-message-hashing Testing"
+description: "CI for dovecot-message-hashing"
+author: "slusarz@curecanti.org"
+
+runs:
+        using: "docker"
+        image: "Dockerfile"
+
+branding:
+        icon: "watch"
+        color: "blue"

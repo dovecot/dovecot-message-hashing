@@ -1,0 +1,24 @@
+From: <testuser1>
+To: <testuser1>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=1234
+Subject: hello, world
+Date: Mon, 24 Apr 2017 13:01:18 +0300
+Message-ID: <7cf436b2-fc47-11e7-88d4-52540078f374@test>
+
+
+--1234
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain; charset=UTF-8
+
+Hello, world
+
+--1234
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="data.bin"
+Content-Length: 76
+Content-Type: application/octet-binary; charset=UTF-8
+
+lxGFivj6UP12NCuz3h+ormxz0gaypGR1Xy1o2RqRP9t4E6r9DRC5VGRDpASO50Hjw27l7I0a/qsz
+--1234
